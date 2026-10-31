@@ -443,6 +443,12 @@ impl Window {
         self.window.set_minimized();
     }
 
+    /// The `xdg_toplevel` states of the last configure, if there was one.
+    #[inline]
+    pub fn xdg_window_state(&self) -> Option<sctk::reexports::csd_frame::WindowState> {
+        self.window_state.lock().unwrap().last_configure.as_ref().map(|configure| configure.state)
+    }
+
     #[inline]
     pub fn is_maximized(&self) -> bool {
         self.window_state

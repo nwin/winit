@@ -81,6 +81,16 @@ impl<T> EventLoopBuilderExtWayland for EventLoopBuilder<T> {
 pub trait WindowExtWayland {
     /// Returns `xdg_toplevel` of the window or [`None`] if the window is X11 window.
     fn xdg_toplevel(&self) -> Option<NonNull<c_void>>;
+
+    /// The `xdg_toplevel` states of the last configure the compositor sent: maximized,
+    /// fullscreen, the tiled edges, activated, and so on.
+    ///
+    /// [`None`] before the first configure, and for an X11 window. A change of these states
+    /// (other than activated and suspended) is followed by a [`WindowEvent::Resized`], also when
+    /// the size stays the same, so read this there.
+    ///
+    /// [`WindowEvent::Resized`]: crate::event::WindowEvent::Resized
+    fn window_state(&self) -> Option<sctk::reexports::csd_frame::WindowState>;
 }
 
 impl WindowExtWayland for Window {
@@ -92,6 +102,16 @@ impl WindowExtWayland for Window {
             crate::platform_impl::Window::X(_) => None,
             #[cfg(wayland_platform)]
             crate::platform_impl::Window::Wayland(window) => window.xdg_toplevel(),
+        }
+    }
+
+    #[inline]
+    fn window_state(&self) -> Option<sctk::reexports::csd_frame::WindowState> {
+        match &self.window {
+            #[cfg(x11_platform)]
+            crate::platform_impl::Window::X(_) => None,
+            #[cfg(wayland_platform)]
+            crate::platform_impl::Window::Wayland(window) => window.xdg_window_state(),
         }
     }
 }
