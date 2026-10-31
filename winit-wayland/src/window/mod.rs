@@ -229,6 +229,10 @@ impl Window {
     pub(crate) fn xdg_toplevel(&self) -> Option<NonNull<c_void>> {
         NonNull::new(self.window.xdg_toplevel().id().as_ptr().cast())
     }
+
+    pub(crate) fn window_state(&self) -> Option<crate::WindowState> {
+        self.common.xdg_window_state()
+    }
 }
 
 impl Window {

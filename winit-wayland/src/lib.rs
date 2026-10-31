@@ -47,6 +47,9 @@ mod state;
 mod types;
 mod window;
 
+/// The `xdg_toplevel` states, as [`WindowExtWayland::window_state`] returns them.
+pub use wayland_csd_frame::WindowState;
+
 pub use self::data_transfer::{DataOffer, DragSource, MimeData, MimeType};
 pub use self::event_loop::{ActiveEventLoop, EventLoop};
 pub use self::popup::Popup;
@@ -89,12 +92,30 @@ pub trait EventLoopBuilderExtWayland {
 pub trait WindowExtWayland {
     /// Returns `xdg_toplevel` of the window or [`None`] if the window is X11 window.
     fn xdg_toplevel(&self) -> Option<NonNull<c_void>>;
+
+    /// Returns the `xdg_toplevel` states of the last configure the compositor sent: maximized,
+    /// fullscreen, the tiled edges, activated, and so on.
+    ///
+    /// This lets an application that draws its own decorations square its corners and drop its
+    /// resize edges while the window is tiled, as the protocol intends.
+    ///
+    /// Returns [`None`] before the first configure, and for windows that are not an
+    /// `xdg_toplevel`. A change of the states, other than of `ACTIVATED` and `SUSPENDED`, is
+    /// followed by a [`WindowEvent::SurfaceResized`], also when the size stays the same.
+    ///
+    /// [`WindowEvent::SurfaceResized`]: winit_core::event::WindowEvent::SurfaceResized
+    fn window_state(&self) -> Option<WindowState>;
 }
 
 impl WindowExtWayland for dyn CoreWindow + '_ {
     #[inline]
     fn xdg_toplevel(&self) -> Option<NonNull<c_void>> {
         self.cast_ref::<Window>()?.xdg_toplevel()
+    }
+
+    #[inline]
+    fn window_state(&self) -> Option<WindowState> {
+        self.cast_ref::<Window>()?.window_state()
     }
 }
 

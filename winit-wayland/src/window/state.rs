@@ -11,7 +11,7 @@ use sctk::reexports::client::backend::ObjectId;
 use sctk::reexports::client::protocol::wl_seat::WlSeat;
 use sctk::reexports::client::protocol::wl_shm::WlShm;
 use sctk::reexports::client::{Proxy, QueueHandle};
-use sctk::reexports::csd_frame::DecorationsFrame;
+use sctk::reexports::csd_frame::{DecorationsFrame, WindowState as XdgWindowState};
 use sctk::reexports::protocols::wp::fractional_scale::v1::client::wp_fractional_scale_v1::WpFractionalScaleV1;
 use sctk::reexports::protocols::wp::text_input::zv3::client::zwp_text_input_v3::ZwpTextInputV3;
 use sctk::reexports::protocols::wp::viewporter::client::wp_viewport::WpViewport;
@@ -539,6 +539,16 @@ impl WindowState {
                 warn!("this fullscreen mode is ignored on Wayland");
             },
             None => xdg_toplevel.unset_fullscreen(),
+        }
+    }
+
+    /// The `xdg_toplevel` states of the last configure, if there was one.
+    pub(crate) fn xdg_window_state(&self) -> Option<XdgWindowState> {
+        match &self.window {
+            WindowType::Window { last_configure, .. } => {
+                last_configure.as_ref().map(|configure| configure.state)
+            },
+            WindowType::Popup { .. } => None,
         }
     }
 

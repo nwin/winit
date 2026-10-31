@@ -40,6 +40,11 @@ changelog entry.
 
 ## Unreleased
 
+### Added
+
+- On Wayland, add `WindowExtWayland::window_state()` to get the `xdg_toplevel` states of the last
+  configure, such as maximized, fullscreen and the tiled edges.
+
 ### Fixed
 
 - On macOS, fix text selected from the Character Viewer not producing an IME commit.

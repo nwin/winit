@@ -292,6 +292,11 @@ impl WindowCommon {
     }
 
     /// Only meaningful for a top-level surface.
+    pub(super) fn xdg_window_state(&self) -> Option<wayland_csd_frame::WindowState> {
+        self.state.upgrade()?.lock().unwrap().xdg_window_state()
+    }
+
+    /// Only meaningful for a top-level surface.
     pub(super) fn is_maximized(&self) -> bool {
         let Some(s) = self.state.upgrade() else { return false };
         let s = s.lock().unwrap();
