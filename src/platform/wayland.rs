@@ -91,6 +91,16 @@ pub trait WindowExtWayland {
     ///
     /// [`WindowEvent::Resized`]: crate::event::WindowEvent::Resized
     fn window_state(&self) -> Option<sctk::reexports::csd_frame::WindowState>;
+
+    /// Sets the parent of this window, as `xdg_toplevel.set_parent`: the compositor keeps a child
+    /// above its parent, minimizes it with the parent and may center it over the parent.
+    /// [`None`] makes the window a top-level window again.
+    ///
+    /// Does nothing if this window or the `parent` is an X11 window, which unsets the parent
+    /// for the latter. A parent that is its own descendant is a protocol error.
+    ///
+    /// Call this right after creating the window, before it is shown.
+    fn set_parent(&self, parent: Option<&Window>);
 }
 
 impl WindowExtWayland for Window {
@@ -112,6 +122,23 @@ impl WindowExtWayland for Window {
             crate::platform_impl::Window::X(_) => None,
             #[cfg(wayland_platform)]
             crate::platform_impl::Window::Wayland(window) => window.xdg_window_state(),
+        }
+    }
+
+    #[inline]
+    fn set_parent(&self, parent: Option<&Window>) {
+        match &self.window {
+            #[cfg(x11_platform)]
+            crate::platform_impl::Window::X(_) => (),
+            #[cfg(wayland_platform)]
+            crate::platform_impl::Window::Wayland(window) => {
+                let parent = parent.and_then(|parent| match &parent.window {
+                    #[cfg(x11_platform)]
+                    crate::platform_impl::Window::X(_) => None,
+                    crate::platform_impl::Window::Wayland(parent) => Some(parent),
+                });
+                window.set_parent(parent)
+            },
         }
     }
 }

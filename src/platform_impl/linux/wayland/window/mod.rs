@@ -449,6 +449,12 @@ impl Window {
         self.window_state.lock().unwrap().last_configure.as_ref().map(|configure| configure.state)
     }
 
+    /// Sets the parent toplevel, or unsets it.
+    #[inline]
+    pub fn set_parent(&self, parent: Option<&Window>) {
+        self.window.set_parent(parent.map(|parent| &parent.window));
+    }
+
     #[inline]
     pub fn is_maximized(&self) -> bool {
         self.window_state
