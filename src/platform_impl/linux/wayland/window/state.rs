@@ -36,6 +36,7 @@ use crate::error::{ExternalError, NotSupportedError};
 use crate::platform_impl::wayland::logical_to_physical_rounded;
 use crate::platform_impl::wayland::types::cursor::{CustomCursor, SelectedCursor};
 use crate::platform_impl::wayland::types::kwin_blur::KWinBlurManager;
+use crate::platform_impl::wayland::types::xdg_dialog::ToplevelDialog;
 use crate::platform_impl::{PlatformCustomCursor, WindowId};
 use crate::window::{CursorGrabMode, CursorIcon, ImePurpose, ResizeDirection, Theme};
 
@@ -154,6 +155,9 @@ pub struct WindowState {
     /// The underlying SCTK window.
     pub window: Window,
 
+    /// The modal hint of the toplevel.
+    dialog: ToplevelDialog,
+
     // NOTE: The spec says that destroying parent(`window` in our case), will unmap the
     // subsurfaces. Thus to achieve atomic unmap of the client, drop the decorations
     // frame after the `window` is dropped. To achieve that we rely on rust's struct
@@ -184,6 +188,9 @@ impl WindowState {
             .map(|fsm| fsm.fractional_scaling(window.wl_surface(), queue_handle));
 
         Self {
+            dialog: ToplevelDialog::new(
+                winit_state.xdg_dialog.as_ref().map(|dialog_state| dialog_state.global().clone()),
+            ),
             blur: None,
             blur_manager: winit_state.kwin_blur_manager.clone(),
             compositor,
@@ -1092,6 +1099,12 @@ impl WindowState {
             self.blur_manager.as_ref().unwrap().unset(self.window.wl_surface());
             self.blur.take().unwrap().release();
         }
+    }
+
+    /// Marks the toplevel as a modal dialog, or not. Fails if the compositor does not support
+    /// dialogs.
+    pub fn set_modal(&mut self, modal: bool) -> Result<(), NotSupportedError> {
+        self.dialog.set_modal(self.window.xdg_toplevel(), modal, &self.queue_handle)
     }
 
     /// Set the window title to a new value.

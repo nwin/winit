@@ -17,6 +17,7 @@
 use std::ffi::c_void;
 use std::ptr::NonNull;
 
+use crate::error::NotSupportedError;
 use crate::event_loop::{ActiveEventLoop, EventLoop, EventLoopBuilder};
 use crate::monitor::MonitorHandle;
 use crate::window::{Window, WindowAttributes};
@@ -101,6 +102,18 @@ pub trait WindowExtWayland {
     ///
     /// Call this right after creating the window, before it is shown.
     fn set_parent(&self, parent: Option<&Window>);
+
+    /// Marks the window as a modal dialog of its parent, as `xdg_dialog_v1.set_modal`: the
+    /// compositor may keep the parent from receiving input while the dialog is open. Pass `false`
+    /// to lift the hint again.
+    ///
+    /// The hint only means something for a window with a parent, see [`set_parent`].
+    ///
+    /// Returns [`NotSupportedError`] for an X11 window, and if the compositor does not offer
+    /// `xdg_wm_dialog_v1`. The compositor, not winit, decides what a modal window blocks.
+    ///
+    /// [`set_parent`]: WindowExtWayland::set_parent
+    fn set_modal(&self, modal: bool) -> Result<(), NotSupportedError>;
 }
 
 impl WindowExtWayland for Window {
@@ -132,6 +145,7 @@ impl WindowExtWayland for Window {
             crate::platform_impl::Window::X(_) => (),
             #[cfg(wayland_platform)]
             crate::platform_impl::Window::Wayland(window) => {
+                #[allow(clippy::bind_instead_of_map)]
                 let parent = parent.and_then(|parent| match &parent.window {
                     #[cfg(x11_platform)]
                     crate::platform_impl::Window::X(_) => None,
@@ -139,6 +153,16 @@ impl WindowExtWayland for Window {
                 });
                 window.set_parent(parent)
             },
+        }
+    }
+
+    #[inline]
+    fn set_modal(&self, modal: bool) -> Result<(), NotSupportedError> {
+        match &self.window {
+            #[cfg(x11_platform)]
+            crate::platform_impl::Window::X(_) => Err(NotSupportedError::new()),
+            #[cfg(wayland_platform)]
+            crate::platform_impl::Window::Wayland(window) => window.set_modal(modal),
         }
     }
 }

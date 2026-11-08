@@ -455,6 +455,13 @@ impl Window {
         self.window.set_parent(parent.map(|parent| &parent.window));
     }
 
+    /// Marks the toplevel as a modal dialog, or not. Fails if the compositor does not support
+    /// dialogs.
+    #[inline]
+    pub fn set_modal(&self, modal: bool) -> Result<(), NotSupportedError> {
+        self.window_state.lock().unwrap().set_modal(modal)
+    }
+
     #[inline]
     pub fn is_maximized(&self) -> bool {
         self.window_state

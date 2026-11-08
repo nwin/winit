@@ -33,6 +33,7 @@ use crate::platform_impl::wayland::types::kwin_blur::KWinBlurManager;
 use crate::platform_impl::wayland::types::wp_fractional_scaling::FractionalScalingManager;
 use crate::platform_impl::wayland::types::wp_viewporter::ViewporterState;
 use crate::platform_impl::wayland::types::xdg_activation::XdgActivationState;
+use crate::platform_impl::wayland::types::xdg_dialog::XdgDialogState;
 use crate::platform_impl::wayland::window::{WindowRequests, WindowState};
 use crate::platform_impl::wayland::{WaylandError, WindowId};
 use crate::platform_impl::OsError;
@@ -93,6 +94,9 @@ pub struct WinitState {
 
     /// Xdg activation.
     pub xdg_activation: Option<XdgActivationState>,
+
+    /// Xdg dialog, to mark toplevels as modal.
+    pub xdg_dialog: Option<XdgDialogState>,
 
     /// Relative pointer.
     pub relative_pointer: Option<RelativePointerState>,
@@ -169,6 +173,7 @@ impl WinitState {
 
             xdg_shell: XdgShell::bind(globals, queue_handle).map_err(WaylandError::Bind)?,
             xdg_activation: XdgActivationState::bind(globals, queue_handle).ok(),
+            xdg_dialog: XdgDialogState::bind(globals, queue_handle).ok(),
 
             windows: Default::default(),
             window_requests: Default::default(),
